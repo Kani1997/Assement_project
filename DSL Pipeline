@@ -1,0 +1,33 @@
+pipelineJob('BuildPipeline') {
+  definition {
+    cps {
+      script("""
+        node {
+          stage('Build') {
+            git url:'https://github.com/Kani1997/pyhton-project.git',branch:'main'
+			}
+		  stage('Ecr Login'){
+                sh ('AWS_ACCESS_KEY_ID="AKIAQRBZ2UWGEXY7OPJD"')
+				sh ('AWS_SECRET_ACCESS_KEY="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"')
+				sh ('AWS_DEFAULT_REGION="ap-south-1"')
+                sh ('aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 036628505996.dkr.ecr.ap-south-1.amazonaws.com')
+				}
+		  stage('Docker'){
+                sh 'docker build -t terraformrepository .'
+            }
+		  stage('docker push'){
+                sh 'docker tag terraformrepository:latest 036628505996.dkr.ecr.ap-south-1.amazonaws.com/terraformrepository:latest'
+            	sh 'docker push 036628505996.dkr.ecr.ap-south-1.amazonaws.com/terraformrepository:latest'
+			    }   
+	  	 stage('Kubernetes'){
+                sh 'minikube delete'
+                sh 'minikube start'
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl get pods'
+                sh 'kubectl get nodes'
+          }
+		}
+    """) 
+    }
+  }
+}
